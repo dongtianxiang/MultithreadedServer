@@ -22,7 +22,7 @@ import java.util.Stack;
  * @author dongtianxiang
  *
  */
-public class ThreadWorker implements Runnable{
+public class ThreadWorker extends Thread{
 	private BlockingQueue socketQueue;
 	private static String homeFolderDirectory;
 	private String initLine = new String();
@@ -45,8 +45,9 @@ public class ThreadWorker implements Runnable{
 	@Override
 	public void run() {
 		while(runFlag) {   /* runFlag is true defaultly */
+			Socket client = null;
 			try{
-				Socket client = (Socket) socketQueue.dequeue();
+				client = (Socket) socketQueue.dequeue();
 				
 				initMap.clear();
 				headers.clear();
@@ -68,6 +69,22 @@ public class ThreadWorker implements Runnable{
                 }
                 
                 String fileName = initMap.get("Path");
+                
+        		/* Special Request for /ShutDown */
+                if(initMap.get("Path").trim().equalsIgnoreCase("/shutdown")) {
+                	client.close();
+                	this.setRunFlag(false);
+                	ThreadPool.closeThreads();
+                	HttpServer.closeSocket();
+                	break;
+                }
+                
+        		/* Special Request for /Control */
+                if(initMap.get("Path").trim().equalsIgnoreCase("/control")) {
+                	generateControlPage();
+                }             
+                
+                /* To ensure only files under home directory can be accessed */
                 if( !securityCheck(fileName) ) {
                 	errorResponse(output, "400");
                 	continue;
@@ -82,6 +99,9 @@ public class ThreadWorker implements Runnable{
                 sendResponse(output);
                 
                 client.close();
+			} catch(InterruptedException e){
+				System.out.println("One thread has been shut down");
+				break;
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -256,12 +276,7 @@ public class ThreadWorker implements Runnable{
 	private boolean sendResponse(PrintStream output) {
 		String HTTPVersion = "HTTP/1.1";  /* Default HTTP version */
 		 
-		/* Special Request for /ShutDown and /Control */
-		if(initMap.size() == 2) { 
-			
-			return true;
-		} 
-		else if(initMap.size() == 3) {
+		if(initMap.size() == 3) {	
 			String path = initMap.get("Path");
 			path = path.replace("%20", " ");  /* In some cases, the file contains white space, which is transferred into "%20" instead. */
 			String fileLocation = homeFolderDirectory + path;
@@ -336,5 +351,9 @@ public class ThreadWorker implements Runnable{
 	
     public void setRunFlag(boolean runFlag) {
         this.runFlag = runFlag;
+    }
+    
+    public void generateControlPage(){
+    	
     }
 }

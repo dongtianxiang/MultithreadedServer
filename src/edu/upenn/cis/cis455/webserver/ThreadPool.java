@@ -6,7 +6,7 @@ import java.util.List;
 
 public class ThreadPool {
 	private BlockingQueue taskQueue;
-	private List<ThreadWorker> threads = new ArrayList<ThreadWorker>();
+	private static List<ThreadWorker> threads = new ArrayList<ThreadWorker>();
 	
 	public ThreadPool(int threadLimit, int taskLimit, String homeDirectory) {
 	    taskQueue = new BlockingQueue(taskLimit);
@@ -20,7 +20,7 @@ public class ThreadPool {
 	    // let the thread worker in the threads list start work
 	    for(ThreadWorker thread : threads){
 	    	System.out.println("Thread is running");
-	    	new Thread(thread).start();
+	    	thread.start();
 	    }    
 	}
 	
@@ -34,9 +34,9 @@ public class ThreadPool {
 	 }
 	 
 	  // control
-	  public void closeThreads() {
+	  public static void closeThreads() {
 	      for(ThreadWorker thread: threads) {
-	          thread.setRunFlag(false);
+	          thread.interrupt();
 	      }
 	  }
 }

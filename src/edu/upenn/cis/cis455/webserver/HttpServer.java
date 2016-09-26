@@ -35,10 +35,13 @@ public class HttpServer {
                 threadPool.handleSocket(client);
 
                 //break;
+            } catch (SocketException e){
+            	System.out.println("Server shut down");
+                break;
             } catch (IOException e) {
                 e.printStackTrace();
                 //break;
-            }
+            } 
             System.out.println("Server Socket is listening another socket.");
 		}
 	}
