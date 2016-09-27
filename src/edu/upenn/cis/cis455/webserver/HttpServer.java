@@ -33,7 +33,7 @@ public class HttpServer {
 			Socket client = null;
             try {
                 client = server.accept();
-                System.out.println("One client socket accepted");
+                //System.out.println("One client socket accepted");
                 threadPool.handleSocket(client);
             } catch (SocketException e){
             	System.out.println("Server shut down");
@@ -42,7 +42,7 @@ public class HttpServer {
                 e.printStackTrace();
                 //break;
             } 
-            System.out.println("Server Socket is listening another socket.");
+            //System.out.println("Server Socket is listening another socket.");
 		}
 	}
 	

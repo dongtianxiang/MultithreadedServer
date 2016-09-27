@@ -44,7 +44,11 @@ public class ThreadWorker extends Thread{
 	}
 	
 	public static void setHome(String path){
-		homeFolderDirectory = "." + path;
+		if(path.length() > 0){
+			homeFolderDirectory = path.charAt(0) == '.' ? path : "." + path;
+		} else {
+			homeFolderDirectory = ".";
+		}
 	}
 
 	@Override
@@ -127,14 +131,14 @@ public class ThreadWorker extends Thread{
 		ArrayList<String> request = new ArrayList<>();
 		try{
 			String line = bufferedReader.readLine();
-			System.out.println(line);
-			if(line == null) System.out.println("line is null");
+			//System.out.println(line);
+			//if(line == null) System.out.println("line is null");
 			while( line != null && !line.trim().equals("")) {
 				if(Thread.currentThread().isInterrupted()) throw new InterruptedException();
 				request.add(line);
 				line = bufferedReader.readLine();
-				System.out.println(line);
-				if(line == null) System.out.println("line is null");
+				//System.out.println(line);
+				//if(line == null) System.out.println("line is null");
 			}
 			
 			/* Avoid Empty Request sent by Browser */
@@ -203,6 +207,7 @@ public class ThreadWorker extends Thread{
         sufixList.add(".jpg");
         sufixList.add(".txt");
         sufixList.add(".html");
+        sufixList.add(".pdf");
         String[] split = fileName.split("/");
         fileName = split[split.length - 1];  /* get rid of previous ./../path/index.html in the fileName*/
         if( fileName.contains(".") ) {
@@ -223,6 +228,9 @@ public class ThreadWorker extends Thread{
                     }
                     if(sufix.equalsIgnoreCase(".html")) {
                     	parsedRequestMap.put("Content-Type", "text/html");
+                    }
+                    if(sufix.equalsIgnoreCase(".pdf")) {
+                    	parsedRequestMap.put("Content-Type", "application/pdf");
                     }
         		}
         	}
@@ -253,19 +261,43 @@ public class ThreadWorker extends Thread{
 	private void errorResponse(PrintStream output, String errorType) {
 		if(errorType.equals("400")) {
 			output.print("HTTP/1.1 400 Bad Request\n");
+			generateErrorPage(output, "400 Bad Request");
 			output.flush();
 			output.close();
 		}
 		if(errorType.equals("403")) {
 			output.print("HTTP/1.1 403 Request Not Allowed\n");
+			generateErrorPage(output, "403 Request Not Allowed");
 			output.flush();
 			output.close();
 		}
 		if(errorType.equals("404")) {
 			output.print("HTTP/1.1 404 Not Found\n");
+			generateErrorPage(output, "404 Not Found");
 			output.flush();
 			output.close();
 		}
+	}
+	
+	private void generateErrorPage(PrintStream output, String errorMessage) {
+		if(initMap.get("Type") != null && initMap.get("Type").equalsIgnoreCase("HEAD")){
+			return;
+		}
+		StringBuilder sb = new StringBuilder();
+		sb.append("<html>");
+		sb.append("<head>");
+		sb.append(errorMessage);
+		sb.append("</head>");
+		sb.append("</html>");
+		
+    	SimpleDateFormat date_format = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z");
+    	date_format.setTimeZone(TimeZone.getTimeZone("GMT"));;
+		output.println("Date: " + date_format.format(new Date()));
+		output.println("Content-Type: " + "text/html");
+		output.println("Content-Length: " + sb.length());
+		output.println("Connection: Close");
+		output.println("\r\n");
+		output.print(sb.toString());
 	}
 	
 	private int validationCheck() {
@@ -292,11 +324,12 @@ public class ThreadWorker extends Thread{
 			String path = initMap.get("Path");
 			path = path.replace("%20", " ");  /* In some cases, the file contains white space, which is transferred into "%20" instead. */
 			String fileLocation = homeFolderDirectory + path;
-			System.out.println("fileLocation : " + fileLocation); 
+			//System.out.println("fileLocation : " + fileLocation); 
 			File file = new File(fileLocation);
 			if( file.isDirectory() ) {  /* File is a directory */
 				/* Deal with directory request, which is better to be an html with href to its file-list */
-			
+				generateFolderPage(file, output);
+				return true;
 			} else {
 				if(!file.exists()) {
 					errorResponse(output, "404");
@@ -338,7 +371,7 @@ public class ThreadWorker extends Thread{
 					return true;
 				}
 			}
-			return true;  /* It depends on the later check of GET or HEAD */
+			//return true;  /* It depends on the later check of GET or HEAD */
 		}
 		else {   /* Bad Request */
 			output.println(HTTPVersion + " 400 Bad Request");
@@ -351,7 +384,7 @@ public class ThreadWorker extends Thread{
 	}
 	
 	private void addContentFolder(File file, PrintStream output){
-		
+		generateFolderPage(file, output);
 	}
 	
 	private void addContentFile(File file, PrintStream output) throws IOException{
@@ -405,29 +438,121 @@ public class ThreadWorker extends Thread{
     public void generateControlPage(PrintStream output){
     	StringBuilder sb = new StringBuilder();
     	sb.append("<html>\n");
+    	sb.append("<title>\n");
+    	sb.append("Welcome to the Server\n");
+    	sb.append("</title>\n");
     	sb.append("<body>\n");
-    	sb.append("Tianxiang Dong<br>");
-    	sb.append("dtianx<br>");
-    	Map<ThreadWorker, String> status = ThreadPool.getStatus();
+    	sb.append("<font size=\"5\">\n");
+    	sb.append("<b>");
+    	sb.append("Developer : Tianxiang Dong<br>");
+    	sb.append("SEAS login: dtianx<br>");
+    	sb.append("</b>");
+    	sb.append("</font>\n");
+    	sb.append("<p>");
+    	
+    	sb.append("<table style=\"font-size:20px;\">");
+    	Map<ThreadWorker, String> statuses = ThreadPool.getStatus();
     	int count = 1;
-    	for(ThreadWorker thread : status.keySet()) {
-    		sb.append("Thread" + count + ": " + status.get(thread) + "<br>");
-    		count++;
-    	}
+    	sb.append("<tr><td>");
+    	sb.append("<b>");
+    	sb.append("Thread");
+    	sb.append("</b>");
+    	sb.append("</td><td>");
+    	sb.append("<b>");
+    	sb.append("Status");
+    	sb.append("</b>");
+    	sb.append("</td></tr>");
+    	
+		for (ThreadWorker thread : statuses.keySet()) { // build thread status
+														// table
+			sb.append("<tr><td>");
+			sb.append("Thread" + count);
+			sb.append("</td><td>");
+			sb.append(statuses.get(thread));
+			sb.append("</td></tr>");
+			count++;
+		}
+		sb.append("</table>");
+		sb.append("<a href=\"/shutdown\"><button>" +  "Shutdown" + "</button></a>");
     	sb.append("</body>\n");
     	sb.append("</html>\n");
+ 
+		//sb.append(HttpConstants.HTTP_RESPONSE_END);
     	
-		//SimpleDateFormat date_format = new SimpleDateFormat("yyyy.MM.dd G 'at' HH:mm:ss z");
-		SimpleDateFormat date_format = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z");
-		date_format.setTimeZone(TimeZone.getTimeZone("GMT"));;
+    	generateHeader(sb, output);
+    	
+    	if(initMap.get("Type").equalsIgnoreCase("GET")) {
+    		output.println(sb.toString());
+    	}
+    	output.flush();
+    	output.close();
+    }
+    
+    public void generateFolderPage(File file, PrintStream output){
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("<html>\n");
+    	sb.append("<title>\n");
+    	sb.append("Welcome to the Server\n");
+    	sb.append("</title>\n");
+    	sb.append("<body>\n");
+    	sb.append("<font size=\"5\">\n");
+    	sb.append("<b>");
+    	sb.append("Developer : Tianxiang Dong<br>");
+    	sb.append("SEAS login: dtianx<br>");
+    	sb.append("</b>");
+    	sb.append("</font>\n");
+    	sb.append("<p>");
+    	
+    	sb.append("<table style=\"font-size:20px;\">");
+    	Map<ThreadWorker, String> statuses = ThreadPool.getStatus();
+    	sb.append("<tr><td>");
+    	sb.append("<b>");
+    	sb.append("Files");
+    	sb.append("</b>");
+    	sb.append("</td><td>");
+    	sb.append("<b>");
+    	sb.append("Last Modified");
+    	sb.append("</b>");
+    	sb.append("</td></tr>");
+    	SimpleDateFormat date_format = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z");
+		for (File f : file.listFiles()) { // build thread status
+														// table
+			sb.append("<tr><td>");
+			String prePath = initMap.get("Path");
+			prePath = prePath.replaceAll("/{2,}", "/");
+			if(prePath.equals("/")) prePath = "";
+			String newPath = prePath + "/" + f.getName();
+			sb.append("<a href=\"" + newPath + "\">" +  f.getName() + "</a>");
+			
+			sb.append("</td><td>");
+			sb.append(date_format.format(new Date(f.lastModified())).toString());
+			sb.append("</td></tr>");
+		}
+		sb.append("</table>");
+		sb.append("<p>");
+		sb.append("<a href=\"/shutdown\"><button>" +  "Shutdown" + "</button></a>");
+    	sb.append("</body>\n");
+    	sb.append("</html>\n");
+ 
+    	generateHeader(sb, output);
+        
+    	// Add content part
+    	if(initMap.get("Type").equalsIgnoreCase("GET")) {
+    		output.println(sb.toString());
+    	}
+    	
+    	output.flush();
+    	output.close();
+    }
+    
+    public void generateHeader(StringBuilder sb, PrintStream output) {
+    	SimpleDateFormat date_format = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z");
+    	date_format.setTimeZone(TimeZone.getTimeZone("GMT"));;
 		output.println("HTTP/1.1" + " 200 OK");
 		output.println("Date: " + date_format.format(new Date()));
 		output.println("Content-Type: " + "text/html");
 		output.println("Content-Length: " + sb.length());
 		output.println("Connection: Close");
 		output.println("\r\n");
-    	output.println(sb.toString());
-    	output.flush();
-    	output.close();
     }
 }
