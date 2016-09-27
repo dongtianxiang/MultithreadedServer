@@ -123,7 +123,6 @@ public class ThreadWorker extends Thread{
 	
 	/* #####  Here we Read in and process the request ##### */
 	private boolean processRequest(BufferedReader bufferedReader) throws InterruptedException{
-		
 		// read in request 
 		ArrayList<String> request = new ArrayList<>();
 		try{
@@ -132,7 +131,6 @@ public class ThreadWorker extends Thread{
 			if(line == null) System.out.println("line is null");
 			while( line != null && !line.trim().equals("")) {
 				if(Thread.currentThread().isInterrupted()) throw new InterruptedException();
-	
 				request.add(line);
 				line = bufferedReader.readLine();
 				System.out.println(line);
@@ -306,7 +304,6 @@ public class ThreadWorker extends Thread{
 				}
 				try{
 					/* Add header here */
-
 					fileTypeCheck(path);
 					String fileType = parsedRequestMap.get("Content-Type");
 					if( fileType == null ) {
