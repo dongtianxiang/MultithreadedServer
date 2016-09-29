@@ -7,14 +7,17 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 import java.util.TimeZone;
 
@@ -36,13 +39,21 @@ public class ThreadWorker extends Thread{
 	private boolean runFlag = true;
 	private Socket client = null;
 	private static final Logger log = Logger.getLogger(ThreadWorker.class);
+	private Map<String, String> expect = new HashMap<>();
+	private Set<String> supportingMethod = new HashSet<>();
 	
 	public ThreadWorker(BlockingQueue taskQueue){
 		this.socketQueue = taskQueue;
+		supportingMethod.add("get");
+		supportingMethod.add("head");
 //		this.homeFolderDirectory = "." + homeFolderDirectory;
 //    	System.out.println(homeFolderDirectory);
 	}
 	
+	/**
+	 * The static method used by Thread pool to set the home directory, which should be called when the threaded is created.
+	 * @param path Home directory
+	 */
 	public static void setHome(String path){
 		if(path.length() > 0){
 			homeFolderDirectory = path.charAt(0) == '.' ? path : "." + path;
@@ -51,6 +62,9 @@ public class ThreadWorker extends Thread{
 		}
 	}
 
+	/**
+	 * Main Method to run this thread.
+	 */
 	@Override
 	public void run() {
 		while(runFlag) {   /* runFlag is true defaultly */
@@ -75,6 +89,13 @@ public class ThreadWorker extends Thread{
                 	client.close();
                 	continue;
                 }
+                
+                /* Supporting Method Check */
+                if(!supportingMethodCheck(output)) {
+                	client.close();
+                	continue;
+                }
+                
                 String fileName = initMap.get("Path");
                 
         		/* Special Request for /ShutDown */
@@ -117,6 +138,9 @@ public class ThreadWorker extends Thread{
 			    //log.warn("NULL POINTER EXCEPTION.");
 				System.out.println("Catch Null Pointer Exception");
 				break;
+			} catch (MalformedURLException e){
+				System.out.println("MalformedURLException Caught");
+				continue;
 			} catch (Exception e) {
 				System.out.println("One thread has been shut down by Exception");
 				break;
@@ -125,7 +149,9 @@ public class ThreadWorker extends Thread{
 	}
 	
 	
-	/* #####  Here we Read in and process the request ##### */
+	/**
+	 *  Here we Read in and process the request.
+	 */
 	private boolean processRequest(BufferedReader bufferedReader) throws InterruptedException{
 		// read in request 
 		ArrayList<String> request = new ArrayList<>();
@@ -133,6 +159,7 @@ public class ThreadWorker extends Thread{
 			String line = bufferedReader.readLine();
 			//System.out.println(line);
 			//if(line == null) System.out.println("line is null");
+			
 			while( line != null && !line.trim().equals("")) {
 				if(Thread.currentThread().isInterrupted()) throw new InterruptedException();
 				request.add(line);
@@ -158,6 +185,24 @@ public class ThreadWorker extends Thread{
 		return true;
 	}
 	
+	/**
+	 * The method to determine whether the incoming request type is supported, like "GET" or "HEAD".
+	 * @param output The PrintStream which might be used if error response is necessary
+	 * @return True if the request is supported
+	 */
+	private boolean supportingMethodCheck(PrintStream output){
+		String method = initMap.get("Type");
+		if( method == null || !supportingMethod.contains(method.trim().toLowerCase()) ) {
+			errorResponse(output, "501");
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * The method used to parse the first line of request.
+	 * @param initLine First line of request
+	 */
 	private void parseInitialLine(String initLine){
 		String[] split = initLine.split("\\s+");  /* Split by White Space */
 		
@@ -189,17 +234,30 @@ public class ThreadWorker extends Thread{
 		
 	}
 	
+	/**
+	 * The method used to parse all the header lines.
+	 * @param headers The result from processRequest, each element in the list is one line in the request.
+	 */
 	private void parseHeaderLine(List<String> headers){
+		String preHeader = null;
 		for(String head : headers) {
-			String[] split = head.split(":");
-			if( split.length >= 2 ) {
-				if(split[0].trim().equalsIgnoreCase("Host")) {
-					headerMap.put("Host", split[1]);
-				}
+			String[] split = head.split(":", 2);
+			if( split.length == 2 ) {
+				headerMap.put(split[0].trim().toLowerCase(), split[1].trim());
+				preHeader = split[0].trim().toLowerCase();
+			} 
+			else if ( split.length == 1 ){
+				headerMap.put(preHeader, headerMap.get(preHeader) + split[0].trim());
 			}
 		}
 	}
 	
+	/**
+	 * Check whether the requested file is supported.
+	 * @param fileName
+	 * @return
+	 * @throws IOException
+	 */
 	private boolean fileTypeCheck(String fileName) throws IOException{
 		ArrayList<String> sufixList = new ArrayList<String>();
         sufixList.add(".gif");
@@ -243,6 +301,11 @@ public class ThreadWorker extends Thread{
         return true;
 	}
 	
+	/**
+	 * The method to determine the files outside the specified home directory cannot be accessed.
+	 * @param fileName
+	 * @return
+	 */
 	private boolean securityCheck(String fileName) {
 		String[] path = fileName.split("/");
 		Stack<String> stack = new Stack<>();
@@ -258,6 +321,11 @@ public class ThreadWorker extends Thread{
 		return true;
 	}
 	
+	/**
+	 * General error response page Generator.
+	 * @param output PrintStream to send response back to client.
+	 * @param errorType ErrorType to be checked.
+	 */
 	private void errorResponse(PrintStream output, String errorType) {
 		if(errorType.equals("400")) {
 			output.print("HTTP/1.1 400 Bad Request\n");
@@ -277,8 +345,34 @@ public class ThreadWorker extends Thread{
 			output.flush();
 			output.close();
 		}
+		if(errorType.equals("304")) {
+			output.print("HTTP/1.1 Not Modified\n");
+			SimpleDateFormat date_format = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z");
+	    	date_format.setTimeZone(TimeZone.getTimeZone("GMT"));;
+			output.println("Date: " + date_format.format(new Date()));
+			output.print("\r\n");
+			output.flush();
+			output.close();
+		}
+		if(errorType.equals("412")) {
+			output.print("HTTP/1.1 412 Precondition Failed\n");
+			output.print("\r\n");
+			output.flush();
+			output.close();
+		}
+		if(errorType.equals("501")) {
+			output.print("HTTP/1.1 501 Not Implemented\n");
+			output.print("\r\n");
+			output.flush();
+			output.close();
+		}
 	}
 	
+	/**
+	 * Private class only be used by errorResponse method. It is used to generate html page.
+	 * @param output
+	 * @param errorMessage
+	 */
 	private void generateErrorPage(PrintStream output, String errorMessage) {
 		if(initMap.get("Type") != null && initMap.get("Type").equalsIgnoreCase("HEAD")){
 			return;
@@ -300,12 +394,25 @@ public class ThreadWorker extends Thread{
 		output.print(sb.toString());
 	}
 	
-	private int validationCheck() {
-		if(initMap.get("Path").contains("http://")) {
-            return 403;
+	/**
+	 * Check whether the absolute path is supported
+	 * @return
+	 * @throws MalformedURLException
+	 */
+	private int validationCheck() throws MalformedURLException {
+		if(initMap.get("Path").contains("http://") ) {
+			if(initMap.get("Protocol").equalsIgnoreCase("HTTP/1.0") || initMap.get("Protocol").equalsIgnoreCase("HTTP/1.1")){
+				 return 400;
+			} else {
+				URL url = new URL(initMap.get("Path"));
+				initMap.put("Path", url.getPath());
+				//System.out.println("Host:" + url.getHost());
+				//System.out.println("Path:" + url.getPath());
+				return 200;
+			}
         }
         if(initMap.get("Protocol").equalsIgnoreCase("HTTP/1.1")) {
-            if( headerMap.get("Host") == null ) {
+            if( headerMap.get("host") == null ) {
                 return 400;
             }
         }
@@ -319,7 +426,12 @@ public class ThreadWorker extends Thread{
 	 */
 	private boolean sendResponse(PrintStream output) {
 		String HTTPVersion = "HTTP/1.1";  /* Default HTTP version */
-		 
+		
+		if(headerMap.get("expect") != null && !initMap.get("Protocol").equalsIgnoreCase("HTTP/1.0")){
+			output.println("HTTP/1.1 100 Continue");
+			output.println();
+		}
+		
 		if(initMap.size() == 3) {	
 			String path = initMap.get("Path");
 			path = path.replace("%20", " ");  /* In some cases, the file contains white space, which is transferred into "%20" instead. */
@@ -340,18 +452,41 @@ public class ThreadWorker extends Thread{
 					fileTypeCheck(path);
 					String fileType = parsedRequestMap.get("Content-Type");
 					if( fileType == null ) {
-						throw new IOException("The file type now supported");
+						throw new IOException("The file type not supported");
 					}
+					
 					
 					//SimpleDateFormat date_format = new SimpleDateFormat("yyyy.MM.dd G 'at' HH:mm:ss z");
 					SimpleDateFormat date_format = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z");
 					date_format.setTimeZone(TimeZone.getTimeZone("GMT"));;
-					//date_format.format(new Date(file.lastModified()));
+					Date now = new Date();
+					Date lastModified = new Date(file.lastModified());
+					
+					if(headerMap.get("if-modified-since") != null) {
+						String ifModified = headerMap.get("if-modified-since");
+						Date requireDate = HttpTools.parseDateFormat(ifModified);
+						if(requireDate != null && requireDate.after(lastModified)) {
+							errorResponse(output, "304");
+							return true;
+						}
+					}
+					
+					if(headerMap.get("if-unmodified-since") != null) {
+						String ifUnmodified = headerMap.get("if-unmodified-since");
+						System.out.println("ifUnmodified :" + ifUnmodified);
+						Date requireDate = HttpTools.parseDateFormat(ifUnmodified);
+						System.out.println("requireDate :" + requireDate.toString());
+						if(requireDate != null && requireDate.before(lastModified)) {
+							errorResponse(output, "412");
+							return true;
+						}
+					}
 					
 					output.println(HTTPVersion + " 200 OK");
-					output.println("Date: " + date_format.format(new Date()));
+					output.println("Date: " + date_format.format(now));
 					output.println("Content-Type: " + fileType);
 					output.println("Content-Length: " + Integer.toString((int)file.length()));
+					output.println("Last Modified: " + date_format.format(lastModified));
 					output.println("Connection: Close");
 					
 					/* Add content here for GET Request */
@@ -383,10 +518,21 @@ public class ThreadWorker extends Thread{
 		
 	}
 	
+	/**
+	 * Private class only used to add content folder
+	 * @param file
+	 * @param output
+	 */
 	private void addContentFolder(File file, PrintStream output){
 		generateFolderPage(file, output);
 	}
 	
+	/**
+	 * The method used to transfer the content of requested file
+	 * @param file
+	 * @param output
+	 * @throws IOException
+	 */
 	private void addContentFile(File file, PrintStream output) throws IOException{
 		try{
 			FileInputStream fileStream = new FileInputStream(file);
@@ -399,20 +545,36 @@ public class ThreadWorker extends Thread{
 		}
 	}
 	
+	/**
+	 * Method usually used to set the runFlag to false.
+	 * @param runFlag
+	 */
     public void setRunFlag(boolean runFlag) {
         this.runFlag = runFlag;
     }
     
+    /**
+     * Used to show the control page. The special status if the socket is connected but nothing has been read
+     * @return
+     */
     public String getPath(){
     	String path = initMap.get("Path");
     	if(path == null) return "Listening For Request";
     	return path;
     }
     
+    /**
+     * The method used to close the client socket of this thread.
+     * @throws IOException
+     */
     public void closeSocket() throws IOException{
     	if( client != null ) client.close();
     }
     
+    /**
+     * Shut down page generator
+     * @param output
+     */
     public void generateShutDownPage(PrintStream output){
     	StringBuilder sb = new StringBuilder();
     	sb.append("<html>\n");
@@ -435,6 +597,10 @@ public class ThreadWorker extends Thread{
     	output.close();
     }
     
+    /**
+     * Control Page generator
+     * @param output
+     */
     public void generateControlPage(PrintStream output){
     	StringBuilder sb = new StringBuilder();
     	sb.append("<html>\n");
@@ -488,6 +654,11 @@ public class ThreadWorker extends Thread{
     	output.close();
     }
     
+    /**
+     * Folder Page Generator
+     * @param file
+     * @param output
+     */
     public void generateFolderPage(File file, PrintStream output){
     	StringBuilder sb = new StringBuilder();
     	sb.append("<html>\n");
@@ -545,6 +716,11 @@ public class ThreadWorker extends Thread{
     	output.close();
     }
     
+    /**
+     * General Response Headers generator.
+     * @param sb
+     * @param output
+     */
     public void generateHeader(StringBuilder sb, PrintStream output) {
     	SimpleDateFormat date_format = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z");
     	date_format.setTimeZone(TimeZone.getTimeZone("GMT"));;

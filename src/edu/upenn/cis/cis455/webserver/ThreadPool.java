@@ -8,6 +8,11 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This is the thread pool includes ThreadWorkers. All the threadWorker are created at the first time the poll is created.
+ * @author Tianxiang Dong
+ *
+ */
 public class ThreadPool {
 	private BlockingQueue taskQueue;
 	private static List<ThreadWorker> threads = new ArrayList<ThreadWorker>();
@@ -29,7 +34,10 @@ public class ThreadPool {
 	    }    
 	}
 	
-	 // add tasks to the task queue
+	 /**
+	  * Add Sockets to the BlockingQueue
+	  * @param s New socket that has been accepted by server.
+	  */
 	 public void handleSocket(Socket s) {
 	    try {
 	      taskQueue.enqueue(s);
@@ -39,6 +47,10 @@ public class ThreadPool {
 	 }
 	 
 	  // shutdown threads
+	 /**
+	  * Method used to close all the opened socket of all threads as well as all the threads in this pool.
+	  * @throws IOException
+	  */
 	  public synchronized static void closeThreads() throws IOException {
 	      for(ThreadWorker thread: threads) {
 	    	  thread.closeSocket();  /* Socket listening for incoming request should be closed by socket closing */
@@ -46,6 +58,10 @@ public class ThreadPool {
 	      }
 	  }
 	  
+	  /**
+	   * Method to get status of all threads, which is actually used by /control request.
+	   * @return The map which includes all information.
+	   */
 	  public static Map<ThreadWorker, String> getStatus(){
 		  for(ThreadWorker thread: threads) {
 			  status.put(thread, thread.getState().toString().equalsIgnoreCase("Waiting") ? "Waiting" : thread.getPath());

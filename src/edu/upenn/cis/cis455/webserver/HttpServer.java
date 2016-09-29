@@ -5,6 +5,11 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 
+/**
+ * This is the main class to invoke HttpServer
+ * @author Tianxiang Dong
+ *
+ */
 public class HttpServer {
 	public static int port = 8080;
 	public static String homeDirectory = "";
@@ -13,7 +18,16 @@ public class HttpServer {
 	public static final int MAX_TASK = 10000;
 	public static final int MAX_WORKER = 10;
 	
+	/**
+	 * To invoke the Server Properly, port number should be provided, as well as the home directory
+	 * @param args  The first argument is port number, second is the home directory. Otherwise the server cannot run.
+	 */
 	public static void main(String[] args) {
+		if( args.length == 0 ) {
+			System.out.println("Developer: Tianxiang Dong");
+			System.out.println("SEAS login: dtianx");
+			return;
+		}
 		if( args.length != 2 ){
 			System.out.println("Wrong number of arguments!");
 			return;
@@ -46,6 +60,9 @@ public class HttpServer {
 		}
 	}
 	
+	/**
+	 * The class used to close the server socket.
+	 */
     public static void closeSocket() {
         try {
             runFlag = false;
