@@ -136,6 +136,8 @@ public class TestHarness {
 				System.err.println("error: cannot find mapping for servlet " + strings[0]);
 				System.exit(-1);
 			}
+			
+			/* Cannot understand this part */
 			for (int j = 1; j < strings.length - 1; j += 2) {
 				request.setParameter(strings[j], strings[j+1]);
 			}
