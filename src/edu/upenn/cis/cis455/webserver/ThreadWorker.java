@@ -23,6 +23,8 @@ import java.util.TimeZone;
 
 import org.apache.log4j.Logger;
 
+import edu.upenn.cis.cis455.servlets.ServletContainer;
+
 /**
  * The thread worker is used to read in the request, dequeue the socket and respond to it.
  * @author dongtianxiang
@@ -41,11 +43,14 @@ public class ThreadWorker extends Thread{
 	private static final Logger log = Logger.getLogger(ThreadWorker.class);
 	private Map<String, String> expect = new HashMap<>();
 	private Set<String> supportingMethod = new HashSet<>();
+	private ServletContainer container;
 	
-	public ThreadWorker(BlockingQueue taskQueue){
+	public ThreadWorker(BlockingQueue taskQueue, ServletContainer container){
 		this.socketQueue = taskQueue;
 		supportingMethod.add("get");
 		supportingMethod.add("head");
+		this.container = container;
+		
 //		this.homeFolderDirectory = "." + homeFolderDirectory;
 //    	System.out.println(homeFolderDirectory);
 	}
@@ -55,11 +60,25 @@ public class ThreadWorker extends Thread{
 	 * @param path Home directory
 	 */
 	public static void setHome(String path){
+<<<<<<< HEAD
 //		if(path.length() > 0){
 //			homeFolderDirectory = path.charAt(0) == '.' ? path : "." + path;
 //		} else {
 //			homeFolderDirectory = ".";
 //		}
+=======
+		/* Relative path handling  */
+		
+		/*
+		if(path.length() > 0){
+			homeFolderDirectory = path.charAt(0) == '.' ? path : "." + path;
+		} else {
+			homeFolderDirectory = ".";
+		}
+		*/
+		
+		/* Should be Absolute path for home directory */
+>>>>>>> 69e3bbf0177d38d56862c9e2b388bf16a1caf80b
 		homeFolderDirectory = path;
 	}
 
@@ -129,7 +148,12 @@ public class ThreadWorker extends Thread{
                 	continue;
                 }
                 
-                sendResponse(output);
+                String servletName = container.lookUp(initMap.get("Path").trim());
+                if(servletName != null) {
+                	container.dispatchRequest(HttpServer.c, client, servletName, initMap, headerMap);
+                } else {
+                	sendResponse(output);
+                }
                 
                 client.close();
 			} catch(InterruptedException e){
@@ -138,6 +162,7 @@ public class ThreadWorker extends Thread{
 			} catch(NullPointerException e) {
 			    //log.warn("NULL POINTER EXCEPTION.");
 				System.out.println("Catch Null Pointer Exception");
+				e.printStackTrace();
 				break;
 			} catch (MalformedURLException e){
 				System.out.println("MalformedURLException Caught");
@@ -436,6 +461,9 @@ public class ThreadWorker extends Thread{
 		if(initMap.size() == 3) {	
 			String path = initMap.get("Path");
 			path = path.replace("%20", " ");  /* In some cases, the file contains white space, which is transferred into "%20" instead. */
+			//System.out.println("fileLocation: " + homeFolderDirectory);
+			//System.out.println("path: " + path);
+
 			String fileLocation = homeFolderDirectory + path;
 			//System.out.println("fileLocation : " + fileLocation); 
 			File file = new File(fileLocation);
