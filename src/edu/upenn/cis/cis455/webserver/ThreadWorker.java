@@ -55,11 +55,12 @@ public class ThreadWorker extends Thread{
 	 * @param path Home directory
 	 */
 	public static void setHome(String path){
-		if(path.length() > 0){
-			homeFolderDirectory = path.charAt(0) == '.' ? path : "." + path;
-		} else {
-			homeFolderDirectory = ".";
-		}
+//		if(path.length() > 0){
+//			homeFolderDirectory = path.charAt(0) == '.' ? path : "." + path;
+//		} else {
+//			homeFolderDirectory = ".";
+//		}
+		homeFolderDirectory = path;
 	}
 
 	/**
