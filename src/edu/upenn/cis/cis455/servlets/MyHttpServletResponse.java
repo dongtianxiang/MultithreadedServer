@@ -62,7 +62,7 @@ public class MyHttpServletResponse implements HttpServletResponse {
 		buffer.append(initMap.get("Protocol") + " " + statusString + "\n");
 		
 		for(StringBuffer sb : cookieBuffer) {
-			buffer.append("SET-COOKIE:" + sb + "\n");
+			buffer.append("Set-Cookie: " + sb + "\n");
 		}
 		
 		for(String header : headerBuffer.keySet()) {
@@ -303,11 +303,13 @@ public class MyHttpServletResponse implements HttpServletResponse {
 		SimpleDateFormat dateFormate = new SimpleDateFormat("EEE, dd MMM yyyy hh:mm:ss z");
 		dateFormate.setTimeZone(TimeZone.getTimeZone("GMT"));
 		Date now = new Date();
-		long validLen = now.getTime() + cookie.getMaxAge() * 1000;  /* Expires in seconds */
+		long validLen = now.getTime() + (long)(cookie.getMaxAge()*1000);  /* Expires in seconds */
 		StringBuilder cookieString = new StringBuilder();
 		cookieString.append(cookie.getName() + "=" + cookie.getValue());
 		String dateFinalGMT = dateFormate.format(validLen);
-		cookieString.append("; Expires=" + dateFinalGMT + "; " + "Path=/");
+		cookieString.append("; Expires=" + dateFinalGMT);
+		if(cookie.getPath() != null) cookieString.append("; Path=" + cookie.getPath());
+		if(cookie.getDomain() != null) cookieString.append("; Domain=" + cookie.getDomain());
 		
 		cookieBuffer.add(new StringBuffer(cookieString));
 	}

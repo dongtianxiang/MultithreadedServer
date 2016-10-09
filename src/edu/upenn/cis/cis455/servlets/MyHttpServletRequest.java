@@ -111,7 +111,7 @@ public class MyHttpServletRequest implements HttpServletRequest{
 		session  = s;
 		sessionID = s.getId();
 	}
-	
+
 	@Override
 	public Object getAttribute(String key) {
 		key = key.toLowerCase();
