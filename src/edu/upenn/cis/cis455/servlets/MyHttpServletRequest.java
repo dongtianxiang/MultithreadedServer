@@ -59,15 +59,15 @@ public class MyHttpServletRequest implements HttpServletRequest{
 	boolean sessionInCookie = false;
 	boolean sessionInURL = false;
 	MyHttpServletResponse responseObject = null;
-	Map<String, MyHttpSession> sessionCache = null;
 	private long sessionTimeout = -1;
+	private String queryString = "";
 	String contentType = "text/html";
 	Map<String, String> initMap;
 	Map<String, String> headerMap;
 	
 	public MyHttpServletRequest(HttpServerConfig c, Socket s, Map<String, String> initMap, Map<String, String> headerMap, String queryString, long sessionTimeout) throws IOException
 	{	
-		this.sessionTimeout = sessionTimeout * 10000;
+		this.sessionTimeout = sessionTimeout * 60;  // time out in minutes 
 		this.parameters = new Properties();
 		this.attributes = new Properties();
 		InputStreamReader reader= new InputStreamReader(s.getInputStream());
@@ -77,6 +77,7 @@ public class MyHttpServletRequest implements HttpServletRequest{
         this.requestURL = initMap.get("Path");
         this.fullPath = c.rootDir + requestURL;
         this.clientSocket = s;
+        this.queryString = queryString;
         this.address = s.getInetAddress();
         this.c = c;
         this.port = s.getLocalPort();
@@ -105,6 +106,20 @@ public class MyHttpServletRequest implements HttpServletRequest{
         }
         cookieArray = new Cookie[cookieList.size()];
         for(int i = 0; i < cookieList.size(); i++) cookieArray[i] = cookieList.get(i); 
+        for(Cookie c : cookieArray){
+        	if(c.getName().equals("SESSIONID")) {
+        		String id = c.getValue();
+	        	MyHttpSession s = ServletContainer.sessionCache.get(id);
+	        	if( s == null ) continue;
+	        	if(s.isValid()) {
+	        		this.session = s;
+	        	} 
+	        	else {
+	        		ServletContainer.sessionCache.remove(id);
+	        	}
+        	}
+        }
+        ServletContainer.removeInvalidSessions();  // remove invalid sessions periodically
 	}
 	
 	public void addSession(MyHttpSession s) {
@@ -326,9 +341,10 @@ public class MyHttpServletRequest implements HttpServletRequest{
 				return d.getTime();
 			}
 		} catch (java.text.ParseException e) {
-			e.printStackTrace();
+			HttpErrorLog.addError(e.getMessage() + "\n\n");
+			return -1;
 		}
-		return -1;
+		//return -1;
 	}
 
 	@Override
@@ -397,9 +413,8 @@ public class MyHttpServletRequest implements HttpServletRequest{
 	@Override
 	public String getQueryString() {
 		// should return the HTTP GET query string, i.e., the portion after the “?” when a GET form is posted.
-        String path = initMap.get("Path");
-        String queryString = path.substring(path.lastIndexOf("?") + 1, path.length());
-        return queryString;
+        if(initMap.get("Type").equalsIgnoreCase("GET")) return queryString;
+        else return "";
 	}
 
 	@Override
@@ -429,17 +444,21 @@ public class MyHttpServletRequest implements HttpServletRequest{
 		return null;
 	}
 
+	public void setResponseObject(MyHttpServletResponse responseObject){
+		this.responseObject = responseObject;
+	}
+	
 	@Override
 	public HttpSession getSession() {
 		if(session==null){
 			session = new MyHttpSession(sessionTimeout);
 			StringBuilder message = new StringBuilder();
-			Cookie c = new Cookie("JSESSIONID",session.getId());
+			Cookie c = new Cookie("SESSIONID",session.getId());
 			c.setMaxAge(session.getMaxInactiveInterval());
 			responseObject.addCookie(c);
-			synchronized(sessionCache){
-				sessionCache.put(session.getId(),session);
-				sessionCache.notify();
+			synchronized(ServletContainer.sessionCache){
+				ServletContainer.sessionCache.put(session.getId(),session);
+				ServletContainer.sessionCache.notify();
 			}
 		}
 		return session;
@@ -451,10 +470,12 @@ public class MyHttpServletRequest implements HttpServletRequest{
 		{
 			session = new MyHttpSession(sessionTimeout);
 			StringBuilder message = new StringBuilder();
-			responseObject.addCookie(new Cookie("JSESSIONID",session.getId()));
-			synchronized(sessionCache){
-				sessionCache.put(session.getId(),session);
-				sessionCache.notify();
+			Cookie c = new Cookie("SESSIONID",session.getId());
+			c.setMaxAge(session.getMaxInactiveInterval());
+			responseObject.addCookie(c);
+			synchronized(ServletContainer.sessionCache){
+				ServletContainer.sessionCache.put(session.getId(),session);
+				ServletContainer.sessionCache.notify();
 			}
 			
 		}
@@ -496,9 +517,5 @@ public class MyHttpServletRequest implements HttpServletRequest{
 	public boolean isUserInRole(String arg0) {
 		// Deprecated 
 		return false;
-	}
-	
-	public void addSessionCache(HashMap<String, MyHttpSession> sessionCache) {
-		this.sessionCache = sessionCache;
 	}
 }

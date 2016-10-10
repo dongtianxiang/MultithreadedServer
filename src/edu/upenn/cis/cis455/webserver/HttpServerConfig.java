@@ -17,7 +17,7 @@ public class HttpServerConfig {
 		this.webInfPath = webInfPath;
 		this.serverIP = null;
 		this.serverName = "Tianxiang";
-		this.protocolSupported = "GET";
+		this.protocolSupported = "GET/HEAD/POST";
 		this.hostName = "Tianxiang";
 	}
 }

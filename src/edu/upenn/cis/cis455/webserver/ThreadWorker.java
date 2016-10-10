@@ -23,6 +23,7 @@ import java.util.TimeZone;
 
 import org.apache.log4j.Logger;
 
+import edu.upenn.cis.cis455.servlets.HttpErrorLog;
 import edu.upenn.cis.cis455.servlets.ServletContainer;
 
 /**
@@ -49,6 +50,7 @@ public class ThreadWorker extends Thread{
 		this.socketQueue = taskQueue;
 		supportingMethod.add("get");
 		supportingMethod.add("head");
+		supportingMethod.add("post");
 		this.container = container;
 		
 //		this.homeFolderDirectory = "." + homeFolderDirectory;
@@ -139,27 +141,31 @@ public class ThreadWorker extends Thread{
                 	errorResponse(output, Integer.toString(validNum));
                 	continue;
                 }
-                
-                String servletName = container.lookUp(initMap.get("Path").trim());
+                String URL = initMap.get("Path").trim();
+                String servletName = container.lookUp(URL);
                 if(servletName != null) {
-                	container.dispatchRequest(HttpServer.c, client, servletName, initMap, headerMap);
+                	container.dispatchRequest(HttpServer.c, client, servletName, initMap, headerMap, URL);
                 } else {
                 	sendResponse(output);
                 }
                 
                 client.close();
 			} catch(InterruptedException e){
+				HttpErrorLog.addError(e.getMessage()+ "\n\n");
 				System.out.println("One thread has been shut down");
 				break;
 			} catch(NullPointerException e) {
+				HttpErrorLog.addError(e.getMessage()+ "\n\n");
 			    //log.warn("NULL POINTER EXCEPTION.");
 				System.out.println("Catch Null Pointer Exception");
 				e.printStackTrace();
 				break;
 			} catch (MalformedURLException e){
+				HttpErrorLog.addError(e.getMessage()+ "\n\n");
 				System.out.println("MalformedURLException Caught");
 				continue;
 			} catch (Exception e) {
+				HttpErrorLog.addError(e.getMessage()+ "\n\n");
 				System.out.println("One thread has been shut down by Exception");
 				break;
 			}
@@ -192,6 +198,7 @@ public class ThreadWorker extends Thread{
 			}
 		} catch (IOException e){
 			/* Socket timeout should be caught in this exception */
+			HttpErrorLog.addError(e.getMessage()+ "\n\n");
 			throw new InterruptedException();
 		}
 		
@@ -660,6 +667,17 @@ public class ThreadWorker extends Thread{
 			count++;
 		}
 		sb.append("</table>");
+		sb.append("<p>");
+		sb.append("<b>");
+		sb.append("<font size=\"4\">\n");
+		sb.append("Error Log Information: ");
+		if(HttpErrorLog.getErrorLog().size() == 0) sb.append("None" + "<br>");
+		sb.append("</font>\n");
+		sb.append("</b>");
+		for(String err : HttpErrorLog.getErrorLog()) {
+			sb.append(err + "<br>");
+		}
+		sb.append("<p>");
 		sb.append("<a href=\"/shutdown\"><button>" +  "Shutdown" + "</button></a>");
     	sb.append("</body>\n");
     	sb.append("</html>\n");
