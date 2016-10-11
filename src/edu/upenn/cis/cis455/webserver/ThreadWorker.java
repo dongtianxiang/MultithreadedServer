@@ -21,6 +21,8 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.TimeZone;
 
+import javax.servlet.ServletException;
+
 import org.apache.log4j.Logger;
 
 import edu.upenn.cis.cis455.servlets.HttpErrorLog;
@@ -144,7 +146,11 @@ public class ThreadWorker extends Thread{
                 String URL = initMap.get("Path").trim();
                 String servletName = container.lookUp(URL);
                 if(servletName != null) {
-                	container.dispatchRequest(HttpServer.c, client, servletName, initMap, headerMap, URL);
+                	try {
+                		container.dispatchRequest(HttpServer.c, client, servletName, initMap, headerMap, URL);
+                	}catch(ServletException e) {
+                		errorResponse(output, "500");
+                	}
                 } else {
                 	sendResponse(output);
                 }
@@ -388,6 +394,12 @@ public class ThreadWorker extends Thread{
 		if(errorType.equals("501")) {
 			output.print("HTTP/1.1 501 Not Implemented\n");
 			output.print("\r\n");
+			output.flush();
+			output.close();
+		}
+		if(errorType.equals("500")) {
+			output.print("HTTP/1.1 500 Internal Server Error\n");
+			generateErrorPage(output, "500 Internal Server Error");
 			output.flush();
 			output.close();
 		}

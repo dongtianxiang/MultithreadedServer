@@ -145,7 +145,17 @@
       <servlet-name>init</servlet-name>
       <url-pattern>/init/foo*</url-pattern>
     </servlet-mapping>
-
+	
+	<servlet-mapping>
+      <servlet-name>init</servlet-name>
+      <url-pattern>/init/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+      <servlet-name>demo</servlet-name>
+      <url-pattern>/init/foo/demo*</url-pattern>
+    </servlet-mapping>
+    
     <servlet-mapping>
       <servlet-name>session1</servlet-name>
       <url-pattern>/session1</url-pattern>

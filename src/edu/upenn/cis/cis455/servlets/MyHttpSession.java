@@ -53,7 +53,7 @@ public class MyHttpSession implements HttpSession{
 	public boolean isValid()
 	{
 		long currentTime = (new Date()).getTime();
-		if(maxInactiveInterval > 0 && currentTime-lastAccessed > maxInactiveInterval){
+		if(maxInactiveInterval >= 0 && currentTime-lastAccessed > maxInactiveInterval){
 			invalidate();
 			return false;
 		}	

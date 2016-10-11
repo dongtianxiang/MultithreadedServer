@@ -70,13 +70,11 @@ public class MyHttpServletRequest implements HttpServletRequest{
 		this.sessionTimeout = sessionTimeout * 60;  // time out in minutes 
 		this.parameters = new Properties();
 		this.attributes = new Properties();
-		InputStreamReader reader= new InputStreamReader(s.getInputStream());
-        this.bufferedReader = new BufferedReader(reader);
+        this.clientSocket = s;
         this.method = initMap.get("Type");
         this.protocol = initMap.get("Protocol");
         this.requestURL = initMap.get("Path");
         this.fullPath = c.rootDir + requestURL;
-        this.clientSocket = s;
         this.queryString = queryString;
         this.address = s.getInetAddress();
         this.c = c;
@@ -114,9 +112,9 @@ public class MyHttpServletRequest implements HttpServletRequest{
 	        	if(s.isValid()) {
 	        		this.session = s;
 	        	} 
-	        	else {
-	        		ServletContainer.sessionCache.remove(id);
-	        	}
+//	        	else {
+//	        		ServletContainer.sessionCache.remove(id);
+//	        	}
         	}
         }
         ServletContainer.removeInvalidSessions();  // remove invalid sessions periodically
@@ -231,7 +229,9 @@ public class MyHttpServletRequest implements HttpServletRequest{
 
 	@Override
 	public BufferedReader getReader() throws IOException {
-		return bufferedReader;
+		InputStreamReader reader= new InputStreamReader(clientSocket.getInputStream());
+        this.bufferedReader = new BufferedReader(reader);
+		return this.bufferedReader;
 	}
 
 	@Override

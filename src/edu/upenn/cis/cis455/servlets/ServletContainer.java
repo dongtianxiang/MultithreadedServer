@@ -128,8 +128,10 @@ public class ServletContainer {
 	 * @param client
 	 * @param initMap
 	 * @param headerMap
+	 * @throws IOException 
+	 * @throws ServletException 
 	 */
-	public void dispatchRequest(HttpServerConfig c, Socket s, String servletName, Map<String, String> initMap, Map<String, String> headerMap, String URL){
+	public void dispatchRequest(HttpServerConfig c, Socket s, String servletName, Map<String, String> initMap, Map<String, String> headerMap, String URL) throws IOException, ServletException{
 		HttpServlet servlet = servletMap.get(servletName);
 //		System.out.println(servletName + "has been initialized");
 		
@@ -145,10 +147,10 @@ public class ServletContainer {
 			servlet.service(request, response);
 		} catch (IOException e) {
 			HttpErrorLog.addError(e.getMessage()+ "\n\n");
-			//e.printStackTrace();
+			throw e;
 		} catch (ServletException e) {
 			HttpErrorLog.addError(e.getMessage()+ "\n\n");
-			//e.printStackTrace();
+			throw e;
 		}
 	}
 	

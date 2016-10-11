@@ -141,7 +141,7 @@ public class MyHttpServletResponse implements HttpServletResponse {
 		else {
 			buffer.delete(0, buffer.length());
 			headerBuffer.clear();
-			statusString = null;
+			statusString = "200 OK";
 		}
 	}
 	
@@ -235,6 +235,7 @@ public class MyHttpServletResponse implements HttpServletResponse {
 			StringBuffer b = new StringBuffer();
 			b.append(contentType);
 			headerBuffer.put("CONTENT-TYPE", b);
+			this.contentType = headerBuffer.get("CONTENT-TYPE").toString();
 			return;
 		}
 		
@@ -252,6 +253,7 @@ public class MyHttpServletResponse implements HttpServletResponse {
 				newBuffer.append(contentType);
 				headerBuffer.put("CONTENT-TYPE", newBuffer);
 			}
+			this.contentType = headerBuffer.get("CONTENT-TYPE").toString();
 			return;
 		}
 		// change total content-type header of the StringBuffer
@@ -260,6 +262,7 @@ public class MyHttpServletResponse implements HttpServletResponse {
 		b.delete(0, b.length());
 		b.append(contentType);
 		headerBuffer.put("CONTENT-TYPE", b);
+		this.contentType = headerBuffer.get("CONTENT-TYPE").toString();
 	}
 	
 	/**
@@ -402,7 +405,6 @@ public class MyHttpServletResponse implements HttpServletResponse {
 
 	@Override
 	public void sendRedirect(String arg0) throws IOException {
-		// TODO Auto-generated method stub
 		statusString = "302 Redirect";
 	}
 
