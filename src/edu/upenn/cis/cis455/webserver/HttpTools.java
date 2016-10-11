@@ -4,6 +4,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import edu.upenn.cis.cis455.servlets.HttpErrorLog;
+
 /**
  * The class includes necessary tools to be used by server
  * @author Tianxiang Dong
@@ -34,6 +36,7 @@ public class HttpTools {
 					try {
 						ret = format3.parse(formatedDate);
 					} catch (ParseException e3) {		
+						HttpErrorLog.addError(e3.getMessage()+ "\n\n");
 						return null;
 					}	
 				}

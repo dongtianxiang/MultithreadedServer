@@ -141,7 +141,7 @@ public class MyHttpServletResponse implements HttpServletResponse {
 		else {
 			buffer.delete(0, buffer.length());
 			headerBuffer.clear();
-			statusString = null;
+			statusString = "200 OK";
 		}
 	}
 	
@@ -235,6 +235,7 @@ public class MyHttpServletResponse implements HttpServletResponse {
 			StringBuffer b = new StringBuffer();
 			b.append(contentType);
 			headerBuffer.put("CONTENT-TYPE", b);
+			this.contentType = headerBuffer.get("CONTENT-TYPE").toString();
 			return;
 		}
 		
@@ -252,6 +253,7 @@ public class MyHttpServletResponse implements HttpServletResponse {
 				newBuffer.append(contentType);
 				headerBuffer.put("CONTENT-TYPE", newBuffer);
 			}
+			this.contentType = headerBuffer.get("CONTENT-TYPE").toString();
 			return;
 		}
 		// change total content-type header of the StringBuffer
@@ -260,6 +262,7 @@ public class MyHttpServletResponse implements HttpServletResponse {
 		b.delete(0, b.length());
 		b.append(contentType);
 		headerBuffer.put("CONTENT-TYPE", b);
+		this.contentType = headerBuffer.get("CONTENT-TYPE").toString();
 	}
 	
 	/**
@@ -300,14 +303,21 @@ public class MyHttpServletResponse implements HttpServletResponse {
 	@Override
 	public void addCookie(Cookie cookie) {
 		if(isCommited || writerCalled) return;
-		SimpleDateFormat dateFormate = new SimpleDateFormat("EEE, dd MMM yyyy hh:mm:ss z");
+		SimpleDateFormat dateFormate = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z");  // must use "HH" to set 24 hour
 		dateFormate.setTimeZone(TimeZone.getTimeZone("GMT"));
+//		dateFormate.setTimeZone(TimeZone.getDefault());
 		Date now = new Date();
-		long validLen = now.getTime() + (long)(cookie.getMaxAge()*1000);  /* Expires in seconds */
+		long validLen = now.getTime() + ((long)cookie.getMaxAge()) * 1000;  /* Expires in seconds */
+		
+		Date expireDate = new Date(validLen);
 		StringBuilder cookieString = new StringBuilder();
 		cookieString.append(cookie.getName() + "=" + cookie.getValue());
-		String dateFinalGMT = dateFormate.format(validLen);
-		cookieString.append("; Expires=" + dateFinalGMT);
+		String dateFinalGMT = dateFormate.format(expireDate);
+		cookieString.append("; Expires=" + dateFinalGMT );
+		
+//		System.out.println("Final Date: " + dateFinalGMT);
+//		System.out.println("Now Date: " + dateFormate.format(now.getTime()));
+		
 		if(cookie.getPath() != null) cookieString.append("; Path=" + cookie.getPath());
 		if(cookie.getDomain() != null) cookieString.append("; Domain=" + cookie.getDomain());
 		
@@ -319,7 +329,8 @@ public class MyHttpServletResponse implements HttpServletResponse {
 		if(isCommited || writerCalled) return;
 		SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy hh:mm:ss z");
 		dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-		String headerDate = dateFormat.format(date);
+		Date d = new Date(date);
+		String headerDate = dateFormat.format(d);
 		if(headerBuffer.containsKey(header)) {
 			StringBuffer sb = headerBuffer.get(header);
 			sb.append("," + headerDate);
@@ -394,7 +405,6 @@ public class MyHttpServletResponse implements HttpServletResponse {
 
 	@Override
 	public void sendRedirect(String arg0) throws IOException {
-		// TODO Auto-generated method stub
 		statusString = "302 Redirect";
 	}
 

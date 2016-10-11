@@ -4,8 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -24,7 +27,7 @@ public class ServletContainer {
 	private MyHandler h;
 	private ServerServletContext context;
 	private HashMap<String,HttpServlet> servletMap;
-	
+	public static HashMap<String, MyHttpSession> sessionCache = new HashMap<>();
 	
 	public ServletContainer(String webdotxml){
 		try {
@@ -33,13 +36,13 @@ public class ServletContainer {
 			context = createContext(h);
 			servletMap = createServlets(h, context);
 		} catch (ParserConfigurationException e){
-			
+			HttpErrorLog.addError(e.getMessage()+ "\n\n");
 		} catch (SAXException e) {
-			
+			HttpErrorLog.addError(e.getMessage()+ "\n\n");
 		} catch (IOException e) {
-			
+			HttpErrorLog.addError(e.getMessage()+ "\n\n");
 		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | ServletException e) {
-			e.printStackTrace();  // Comes from createServlets 
+			HttpErrorLog.addError(e.getMessage()+ "\n\n"); // Comes from createServlets 
 		}
 	}
 	
@@ -83,9 +86,41 @@ public class ServletContainer {
 	}
 	
 	public String lookUp(String URL) {
-		return h.m_urlPattern.get(URL);
+		String noQueryURL = "";
+		if(URL.contains("?")) {
+			String[] split = URL.split("\\?");
+			URL = split[0];
+		}
+		noQueryURL = URL;
+		String res = "";
+		for(String pattern : h.m_urlPattern.keySet()) {
+			int len = matchString(pattern, noQueryURL);
+			if(len != -1 && len > res.length()) res = pattern;
+		}
+		return h.m_urlPattern.get(res);
 	}
 	
+	public String getQueryString(String URL) {
+		String[] split = URL.split("\\?");
+		if(split.length <= 1) return "";
+		else return split[1];
+	}
+	
+	public int matchString(String pattern, String URL) {
+		if( !pattern.contains("*") ) {
+			if( pattern.equals(URL)) return pattern.length();
+			else return -1;
+		} else {
+			if(pattern.charAt(pattern.length() - 1) == '*' && pattern.charAt(pattern.length() - 2) == '/') {
+				pattern = pattern.substring(0, pattern.length() - 2);
+				if(URL.contains(pattern)) return pattern.length();
+				else return -1;
+			}
+			pattern = pattern.substring(0, pattern.length() - 1);
+			if(URL.contains(pattern)) return pattern.length();
+			else return -1;
+		}
+	}
 	
 	/**
 	 * The class we are going to call after we have make sure the given URL pattern matches one of the servlet 
@@ -93,8 +128,10 @@ public class ServletContainer {
 	 * @param client
 	 * @param initMap
 	 * @param headerMap
+	 * @throws IOException 
+	 * @throws ServletException 
 	 */
-	public void dispatchRequest(HttpServerConfig c, Socket s, String servletName, Map<String, String> initMap, Map<String, String> headerMap){
+	public void dispatchRequest(HttpServerConfig c, Socket s, String servletName, Map<String, String> initMap, Map<String, String> headerMap, String URL) throws IOException, ServletException{
 		HttpServlet servlet = servletMap.get(servletName);
 //		System.out.println(servletName + "has been initialized");
 		
@@ -103,15 +140,38 @@ public class ServletContainer {
 		long sessionTimeout = 30;
 		
 		try {
-			MyHttpServletRequest request = new MyHttpServletRequest(c, s, initMap, headerMap, "", sessionTimeout);
+			String queryString = getQueryString(URL);
+			MyHttpServletRequest request = new MyHttpServletRequest(c, s, initMap, headerMap, queryString, sessionTimeout);
 			MyHttpServletResponse response = new MyHttpServletResponse(s.getOutputStream(), c, initMap, headerMap);
+			request.setResponseObject(response);
 			servlet.service(request, response);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			HttpErrorLog.addError(e.getMessage()+ "\n\n");
+			throw e;
 		} catch (ServletException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			HttpErrorLog.addError(e.getMessage()+ "\n\n");
+			throw e;
+		}
+	}
+	
+	public static void removeInvalidSessions(){
+		if(sessionCache.size() > 100000000) {
+			List<String> invalidID = new ArrayList<>();
+			for(String id : sessionCache.keySet()) {
+				if(!sessionCache.get(id).isValid()){ 
+					invalidID.add(id);
+				}
+			}
+			for(String id : invalidID) {
+				sessionCache.remove(id);
+			}
+		}
+	}
+	
+	public void shutdown(){
+		for(String str : servletMap.keySet()) {
+			HttpServlet s = servletMap.get(str);
+			s.destroy();
 		}
 	}
 }

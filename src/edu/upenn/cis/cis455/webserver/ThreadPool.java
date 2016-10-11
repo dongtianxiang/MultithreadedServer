@@ -8,6 +8,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
+import edu.upenn.cis.cis455.servlets.HttpErrorLog;
 import edu.upenn.cis.cis455.servlets.ServletContainer;
 
 /**
@@ -19,7 +20,7 @@ public class ThreadPool {
 	private BlockingQueue taskQueue;
 	private static List<ThreadWorker> threads = new ArrayList<ThreadWorker>();
 	private static Map<ThreadWorker, String> status = new HashMap<>();
-	private ServletContainer container;
+	private static ServletContainer container;
 	
 	public ThreadPool(int threadLimit, int taskLimit, String homeDirectory, String webdotxml) {
 	    taskQueue = new BlockingQueue(taskLimit);
@@ -46,6 +47,7 @@ public class ThreadPool {
 	    try {
 	      taskQueue.enqueue(s);
 	    } catch (InterruptedException e) {
+	      HttpErrorLog.addError(e.getMessage()+ "\n\n");
 	      e.printStackTrace();
 	    }
 	 }
@@ -60,6 +62,7 @@ public class ThreadPool {
 	    	  thread.closeSocket();  /* Socket listening for incoming request should be closed by socket closing */
 	          thread.interrupt();
 	      }
+	      container.shutdown();
 	  }
 	  
 	  /**

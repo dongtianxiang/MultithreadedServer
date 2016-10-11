@@ -5,6 +5,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 
+import edu.upenn.cis.cis455.servlets.HttpErrorLog;
+
 /**
  * This is the main class to invoke HttpServer
  * @author Tianxiang Dong
@@ -43,7 +45,7 @@ public class HttpServer {
         try {
 			server = new ServerSocket(port, 200000);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			HttpErrorLog.addError(e.getMessage()+ "\n\n");
 			e.printStackTrace();
 		}
  
@@ -57,6 +59,7 @@ public class HttpServer {
             	System.out.println("Server shut down");
                 break;
             } catch (IOException e) {
+            	HttpErrorLog.addError(e.getMessage()+ "\n\n");
                 e.printStackTrace();
                 //break;
             } 
@@ -72,6 +75,7 @@ public class HttpServer {
             runFlag = false;
             server.close();
         } catch (IOException e) {
+        	HttpErrorLog.addError(e.getMessage()+ "\n\n");
             e.printStackTrace();
         }
     }

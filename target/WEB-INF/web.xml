@@ -65,33 +65,110 @@
       </description>
       <servlet-class>edu.upenn.cis.cis455.testServlets.DemoServlet</servlet-class>
       <!-- Load this servlet at server startup time -->
-      <load-on-startup/>
+      <load-on-startup>3</load-on-startup>
+    </servlet>
+
+    <servlet>
+      <servlet-name>init</servlet-name>
+      <description>
+        This servlet checks for the context init parameter "webmaster" from
+        above, and the servlet init parameter "TestParam" from below.
+      </description>
+      <servlet-class>edu.upenn.cis.cis455.testServlets.InitParamServlet</servlet-class>
+      <!-- Load this servlet at server startup time -->
+      <init-param>
+        <param-name>TestParam</param-name>
+        <param-value>1776</param-value>
+      </init-param>
+     <load-on-startup>3</load-on-startup>
+    </servlet>
+
+    <servlet>
+      <servlet-name>session1</servlet-name>
+      <servlet-class>edu.upenn.cis.cis455.testServlets.SessionServlet1</servlet-class>
+      <!-- Load this servlet at server startup time -->
+      <load-on-startup>3</load-on-startup>
+    </servlet>
+
+    <servlet>
+      <servlet-name>session2</servlet-name>
+      <servlet-class>edu.upenn.cis.cis455.testServlets.SessionServlet2</servlet-class>
+      <!-- Load this servlet at server startup time -->
+      <load-on-startup>3</load-on-startup>
+    </servlet>
+
+    <servlet>
+      <servlet-name>session3</servlet-name>
+      <servlet-class>edu.upenn.cis.cis455.testServlets.SessionServlet3</servlet-class>
+      <!-- Load this servlet at server startup time -->
+     <load-on-startup>3</load-on-startup>
     </servlet>
 
     <servlet>
       <servlet-name>cookie1</servlet-name>
       <servlet-class>edu.upenn.cis.cis455.testServlets.CookieServlet1</servlet-class>
       <!-- Load this servlet at server startup time -->
-      <load-on-startup/>
+     
     </servlet>
 
     <servlet>
       <servlet-name>cookie2</servlet-name>
       <servlet-class>edu.upenn.cis.cis455.testServlets.CookieServlet2</servlet-class>
       <!-- Load this servlet at server startup time -->
-      <load-on-startup/>
+      <load-on-startup>1</load-on-startup>
     </servlet>
 
     <servlet>
       <servlet-name>cookie3</servlet-name>
       <servlet-class>edu.upenn.cis.cis455.testServlets.CookieServlet3</servlet-class>
       <!-- Load this servlet at server startup time -->
-      <load-on-startup/>
+      <load-on-startup>3</load-on-startup>
+    </servlet>
+
+    <servlet>
+      <servlet-name>busy</servlet-name>
+      <servlet-class>edu.upenn.cis.cis455.testServlets.BusyServlet</servlet-class>
+      <load-on-startup>4</load-on-startup>  <!-- Load this servlet at server startup time -->
     </servlet>
 
     <servlet-mapping>
       <servlet-name>demo</servlet-name>
+      <url-pattern>/init/abcde</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+      <servlet-name>demo</servlet-name>
       <url-pattern>/demo</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+      <servlet-name>init</servlet-name>
+      <url-pattern>/init/foo*</url-pattern>
+    </servlet-mapping>
+	
+	<servlet-mapping>
+      <servlet-name>init</servlet-name>
+      <url-pattern>/init/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+      <servlet-name>demo</servlet-name>
+      <url-pattern>/init/foo/demo*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+      <servlet-name>session1</servlet-name>
+      <url-pattern>/session1</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+      <servlet-name>session2</servlet-name>
+      <url-pattern>/session2</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+      <servlet-name>session3</servlet-name>
+      <url-pattern>/session3</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>
@@ -107,6 +184,11 @@
     <servlet-mapping>
       <servlet-name>cookie3</servlet-name>
       <url-pattern>/cookie3</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+      <servlet-name>busy</servlet-name>
+      <url-pattern>/busy</url-pattern>
     </servlet-mapping>
 
     <!-- Define the default session timeout for your application,

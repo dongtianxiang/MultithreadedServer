@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Properties;
+import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
 
@@ -15,7 +16,7 @@ public class MyHttpSession implements HttpSession{
 	static Long id_pool = new Long(0);
 	private Properties attributes;
 	private Date date;
-	private final Long SESSION_ID;
+	private final String SESSION_ID;
 	private boolean valid;
 	private boolean isnew;
 	private long maxInactiveInterval;
@@ -24,15 +25,18 @@ public class MyHttpSession implements HttpSession{
 	private ServerServletContext context;
 	
 	public MyHttpSession(long sessionTimeOut){
-		this.maxInactiveInterval = sessionTimeOut;
+		this.maxInactiveInterval = sessionTimeOut;	
 		this.attributes = new Properties();
 		this.date = new Date();
-		synchronized(id_pool) {
-			SESSION_ID = id_pool + 1;
-			id_pool++;
-		}
+		Random random = new Random();
+		String id = "";
+		do {
+			id = ((Long)Math.abs(random.nextLong())).toString();
+		} while(ServletContainer.sessionCache.get(id) != null);
+		SESSION_ID = id;
+		
 		this.creationTime = date.getTime();
-		this.lastAccessed = 0;
+		this.lastAccessed = creationTime;
 		this.valid = true;
 		this.isnew = true;
 	}
@@ -49,10 +53,11 @@ public class MyHttpSession implements HttpSession{
 	public boolean isValid()
 	{
 		long currentTime = (new Date()).getTime();
-		if(maxInactiveInterval > 0 && currentTime-lastAccessed > maxInactiveInterval){
+		if(maxInactiveInterval >= 0 && currentTime-lastAccessed > maxInactiveInterval){
 			invalidate();
 			return false;
-		}
+		}	
+		this.lastAccessed = currentTime;
 		return valid;
 	}
 	
@@ -79,7 +84,7 @@ public class MyHttpSession implements HttpSession{
 
 	@Override
 	public String getId() {
-		return this.SESSION_ID.toString();
+		return SESSION_ID;
 	}
 
 	@Override

@@ -12,7 +12,13 @@ public class BusyServlet extends HttpServlet {
 		out.println("<HTML><HEAD><TITLE>Busy Servlet</TITLE></HEAD><BODY>");
 		out.println("<P>Starting work...</P>");
 		for (int j = 1; j < 3; ++j) {
-			for (int i = 0; i < Integer.MAX_VALUE; ++i) {
+			for (int i = 0; i < 3; ++i) {
+				try {
+					Thread.currentThread().sleep(500);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				};
 			}
 		}
 		out.println("<P>Done!</P>");
