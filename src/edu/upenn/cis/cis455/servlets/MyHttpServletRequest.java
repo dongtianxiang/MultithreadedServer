@@ -31,10 +31,16 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import com.sun.xml.internal.messaging.saaj.packaging.mime.internet.ParseException;
+//import com.sun.xml.internal.messaging.saaj.packaging.mime.internet.ParseException;
 
 import edu.upenn.cis.cis455.webserver.HttpServerConfig;
 
+/**
+ * This is the class implemented from HttpServletRequest for Servlets
+ * {@inheritDoc}
+ * @author cis555
+ *
+ */
 public class MyHttpServletRequest implements HttpServletRequest{
 	
 	String encoding = "ISO-8859-1";
@@ -84,12 +90,15 @@ public class MyHttpServletRequest implements HttpServletRequest{
         getCookiesFromHeader();
         
         
-        for(String str : headerMap.keySet())
-        	System.out.println(str + ": " + headerMap.get(str));
-        System.out.println("----Request End-----");
+//        for(String str : headerMap.keySet())
+//        	System.out.println(str + ": " + headerMap.get(str));
+//        System.out.println("----Request End-----");
         
 	}
 	
+	/**
+	 * Method used in constructor to get cookies from headers in request
+	 */
 	private void getCookiesFromHeader(){
         String cookiesString = headerMap.get("cookie");
         List<Cookie> cookieList = new ArrayList<>();
@@ -120,61 +129,95 @@ public class MyHttpServletRequest implements HttpServletRequest{
         ServletContainer.removeInvalidSessions();  // remove invalid sessions periodically
 	}
 	
+	/**
+	 * Method to add Session from the cookie got in headers
+	 * @param s
+	 */
 	public void addSession(MyHttpSession s) {
 		session  = s;
 		sessionID = s.getId();
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Object getAttribute(String key) {
 		key = key.toLowerCase();
 		return attributes.get(key);
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Enumeration getAttributeNames() {
 		Set<Object> keys = attributes.keySet();
 		Vector<Object> atts = new Vector<Object>(keys);
 		return atts.elements();
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getCharacterEncoding() {
 		return encoding;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public int getContentLength() {
 		if(headerMap.get("content-length") == null) return -1;
 		else return Integer.parseInt(headerMap.get("content-length"));
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getContentType() {
 		return "text/html";
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public ServletInputStream getInputStream() throws IOException {
 		// Implementation Not Required 
 		return null;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getLocalAddr() {
 		return c.serverIP.toString();
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getLocalName() {
 		return c.serverName;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public int getLocalPort() {
 		return port;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Locale getLocale() {
 		if(headerMap.get("accept-language") != null) {
@@ -183,31 +226,46 @@ public class MyHttpServletRequest implements HttpServletRequest{
 		}
 		return Locale.US;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Enumeration getLocales() {
 		// Implementation Not Required 
 		return null;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getParameter(String key) {
 		key = key.toLowerCase();
 		return parameters.getProperty(key);
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Map getParameterMap() {
 		return parameters;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Enumeration getParameterNames() {
 		Set<Object> keys = parameters.keySet();
 		Vector<Object> atts = new Vector<Object>(keys);
 		return atts.elements();
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String[] getParameterValues(String key) {
 		key = key.toLowerCase();
@@ -221,98 +279,152 @@ public class MyHttpServletRequest implements HttpServletRequest{
 		}
 		return res;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getProtocol() {
 		return protocol;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public BufferedReader getReader() throws IOException {
 		InputStreamReader reader= new InputStreamReader(clientSocket.getInputStream());
         this.bufferedReader = new BufferedReader(reader);
 		return this.bufferedReader;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getRealPath(String arg0) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getRemoteAddr() {
 		return address.toString();
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getRemoteHost() {
 		return clientSocket.toString();
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public int getRemotePort() {
 		return clientSocket.getPort();
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public RequestDispatcher getRequestDispatcher(String arg0) {
 		// Implementation Not Required 
 		return null;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getScheme() {
 		return "http";
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getServerName() {
 		return c.hostName;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public int getServerPort() {
 		return port;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isSecure() {
 		return false;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void removeAttribute(String key) {
 		key = key.toLowerCase();
 		attributes.remove(key);
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setAttribute(String key, Object val) {
 		key = key.toLowerCase();
 		attributes.put(key, val);
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setCharacterEncoding(String encoding) throws UnsupportedEncodingException {
 		this.encoding = encoding;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getAuthType() {
 		return BASIC_AUTH;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getContextPath() {
 		return "";
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Cookie[] getCookies() {
 		return cookieArray;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public long getDateHeader(String key) {
 		key = key.toLowerCase();
@@ -346,20 +458,29 @@ public class MyHttpServletRequest implements HttpServletRequest{
 		}
 		//return -1;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getHeader(String key) {
 		key = key.toLowerCase();
 		return headerMap.get(key);
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Enumeration getHeaderNames() {
 		Set<String> keys = headerMap.keySet();
 		Vector<Object> atts = new Vector<Object>(keys);
 		return atts.elements();
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Enumeration getHeaders(String key) {
         List<String> arr = new ArrayList<String>();
@@ -367,7 +488,10 @@ public class MyHttpServletRequest implements HttpServletRequest{
         Enumeration<String> e = Collections.enumeration(arr);
         return e;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public int getIntHeader(String key) throws NumberFormatException {
 		key = key.toLowerCase();
@@ -376,78 +500,96 @@ public class MyHttpServletRequest implements HttpServletRequest{
 		}
 		return Integer.parseInt(headerMap.get(key));
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getMethod() {
 		return method;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getPathInfo() {
-		// should always return the remainder of the URL request after the portion matched by the url-pattern in web-xml. It starts with a “/”.
         String path = initMap.get("Path");
-        if (path.contains("?")) {
-            String pathWithoutQuery = path.substring(0, path.lastIndexOf("?"));
-            ArrayList<String> pathSplit = new ArrayList<String>(
-                    Arrays.asList(pathWithoutQuery.split("/")));
-            // assume the servlet name is the between first two slashes
-            pathSplit.remove(0);
-            pathSplit.remove(1);
-            StringBuilder stringBuilder = new StringBuilder();
-            for (String s : pathSplit) {
-                stringBuilder.append("/");
-                stringBuilder.append(s);
-            }
-            return stringBuilder.toString();
-        } else {
-            return "";
-        }
+        String res = ServletContainer.getPathInfo(path);
+        return res;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getPathTranslated() {
 		// Deprecated
 		return null;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getQueryString() {
-		// should return the HTTP GET query string, i.e., the portion after the “?” when a GET form is posted.
         if(initMap.get("Type").equalsIgnoreCase("GET")) return queryString;
         else return "";
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getRemoteUser() {
 		return null;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getRequestURI() {
 		return requestURL;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public StringBuffer getRequestURL() {
 		StringBuffer b = new StringBuffer();
 		b.append("http://"+c.hostName+":"+c.port+""+requestURL);
 		return b;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getRequestedSessionId() {
 		return sessionID;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getServletPath() {
 		return null;
 	}
-
+	
+	/**
+	 * This is the method to add response object into request
+	 * @param responseObject
+	 */
 	public void setResponseObject(MyHttpServletResponse responseObject){
 		this.responseObject = responseObject;
 	}
 	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public HttpSession getSession() {
 		if(session==null){
@@ -464,6 +606,10 @@ public class MyHttpServletRequest implements HttpServletRequest{
 		return session;
 	}
 
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public HttpSession getSession(boolean toCreate) {
 		if(session == null && toCreate)
@@ -482,28 +628,44 @@ public class MyHttpServletRequest implements HttpServletRequest{
 		return session;
 	}
 
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Principal getUserPrincipal() {
 		// Deprecated
 		return null;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isRequestedSessionIdFromCookie() {
 		// TODO Auto-generated method stub
 		return false;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isRequestedSessionIdFromURL() {
 		return false;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isRequestedSessionIdFromUrl() {
 		return false;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isRequestedSessionIdValid() {
 		if(session!=null) {
@@ -512,7 +674,10 @@ public class MyHttpServletRequest implements HttpServletRequest{
 			return false;
 		}
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isUserInRole(String arg0) {
 		// Deprecated 

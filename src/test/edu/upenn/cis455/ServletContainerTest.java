@@ -9,7 +9,7 @@ import edu.upenn.cis.cis455.webserver.HttpServerConfig;
 import junit.framework.TestCase;
 
 public class ServletContainerTest extends TestCase{
-	ServletContainer container = new ServletContainer("./target/WEB-INF/web.xml");
+	ServletContainer container = new ServletContainer("./conf/web.xml");
 	public void testA() {
 		assertEquals(container.lookUp("/demo"), "demo");
 		assertEquals(container.lookUp("/init/foo"), "init");

@@ -29,6 +29,11 @@ import javax.servlet.http.HttpSession;
 
 import edu.upenn.cis.cis455.webserver.HttpServerConfig;
 
+/**
+ * This is the class inherited from HttpServletResponse for response on Servlets
+ * @author cis555
+ *
+ */
 public class MyHttpServletResponse implements HttpServletResponse {
 	private OutputStream output;
 	private Map<String, String> initMap;
@@ -58,6 +63,9 @@ public class MyHttpServletResponse implements HttpServletResponse {
 		this.buffer = new StringBuffer();
 	}
 	
+	/**
+	 * Private class used to generate header buffers
+	 */
 	private void generateBuffer(){
 		buffer.append(initMap.get("Protocol") + " " + statusString + "\n");
 		
@@ -71,7 +79,7 @@ public class MyHttpServletResponse implements HttpServletResponse {
 		}
 		
 		buffer.append("\n");
-		System.out.println(buffer.toString());
+		//System.out.println(buffer.toString());
 	}
 	
 	/**
@@ -91,40 +99,61 @@ public class MyHttpServletResponse implements HttpServletResponse {
 		statusString = "200 OK";
 		headerBuffer.clear();
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public int getBufferSize() {
 		return bufferSize;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getCharacterEncoding() {
 		return "ISO-8859-1";
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getContentType() {
 		return contentType;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Locale getLocale() {
 		return currentLocale;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public ServletOutputStream getOutputStream() throws IOException {
 		// Deprecated
 		return null;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public PrintWriter getWriter() throws IOException {
 		writerCalled = true;
 		flushBuffer();
 		return new PrintWriter(output,true);
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isCommitted() {
 		return isCommited;
@@ -299,7 +328,10 @@ public class MyHttpServletResponse implements HttpServletResponse {
 			b.append("; charset="+getCharacterEncoding());
 		}
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void addCookie(Cookie cookie) {
 		if(isCommited || writerCalled) return;
@@ -323,7 +355,10 @@ public class MyHttpServletResponse implements HttpServletResponse {
 		
 		cookieBuffer.add(new StringBuffer(cookieString));
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void addDateHeader(String header, long date) {
 		if(isCommited || writerCalled) return;
@@ -339,7 +374,10 @@ public class MyHttpServletResponse implements HttpServletResponse {
 		}
 		
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void addHeader(String header, String value) {
 		if(isCommited || writerCalled) return;
@@ -351,7 +389,10 @@ public class MyHttpServletResponse implements HttpServletResponse {
 			headerBuffer.put(header,new StringBuffer(value));
 		}
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void addIntHeader(String header, int value) {
 		if(isCommited || writerCalled) return;
@@ -364,73 +405,112 @@ public class MyHttpServletResponse implements HttpServletResponse {
 			headerBuffer.put(header,new StringBuffer(value));
 		}
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean containsHeader(String key) {
 		key = key.toUpperCase();
 		return headerBuffer.containsKey(key);
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String encodeRedirectURL(String arg0) {
 		return null;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String encodeRedirectUrl(String arg0) {
 		return null;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String encodeURL(String arg0) {
 		return null;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String encodeUrl(String arg0) {
 		return null;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void sendError(int arg0) throws IOException {
 		// TODO Auto-generated method stub
 		
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void sendError(int arg0, String arg1) throws IOException {
 		// TODO Auto-generated method stub
 		
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void sendRedirect(String arg0) throws IOException {
 		statusString = "302 Redirect";
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setDateHeader(String arg0, long arg1) {
 		// TODO Auto-generated method stub
 		
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setHeader(String arg0, String arg1) {
 		// TODO Auto-generated method stub
 		
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setIntHeader(String arg0, int arg1) {
 		// TODO Auto-generated method stub
 		
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setStatus(int statusCode) {
 		statusString = c.protocolSupported + " "+ statusCode;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setStatus(int arg0, String arg1) {
 		

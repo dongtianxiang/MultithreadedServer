@@ -12,6 +12,11 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionContext;
 
+/**
+ * The class inherited from HttpSession, which is used to provide Session connection based on cookies.
+ * @author cis555
+ *
+ */
 public class MyHttpSession implements HttpSession{
 	static Long id_pool = new Long(0);
 	private Properties attributes;
@@ -46,10 +51,18 @@ public class MyHttpSession implements HttpSession{
 		setContext(context);
 	}
 	
+	/**
+	 * Set context into Session
+	 * @param context
+	 */
 	public void setContext(ServerServletContext context){
 		this.context = context;
 	}
 	
+	/**
+	 * To check if the session is still valid.
+	 * @return
+	 */
 	public boolean isValid()
 	{
 		long currentTime = (new Date()).getTime();
@@ -61,42 +74,66 @@ public class MyHttpSession implements HttpSession{
 		return valid;
 	}
 	
+	/**
+	 * To mark the session not new
+	 */
 	public void setOld() {
 		this.isnew = false;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Object getAttribute(String key) {
 		return attributes.get(key);
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Enumeration getAttributeNames() {
 		Set<Object> keys = attributes.keySet();
 		Vector<Object> atts = new Vector<Object>(keys);
 		return atts.elements();
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public long getCreationTime() {
 		return this.creationTime;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getId() {
 		return SESSION_ID;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public long getLastAccessedTime() {
 		return this.lastAccessed;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public int getMaxInactiveInterval() {
 		return (int)maxInactiveInterval;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public ServletContext getServletContext() {
 		return context;
@@ -107,48 +144,75 @@ public class MyHttpSession implements HttpSession{
 		// deprecated 
 		return null;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Object getValue(String key) {
 		return attributes.get(key);
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String[] getValueNames() {
 		// deprecated 
 		return null;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void invalidate() {
 		this.valid = false;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isNew() {
 		return this.isnew;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void putValue(String key, Object value) {
 		this.attributes.put(key, value);
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void removeAttribute(String key) {
 		this.attributes.remove(key);
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void removeValue(String key) {
 		this.attributes.remove(key);
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setAttribute(String key, Object value) {
 		this.attributes.put(key, value);
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setMaxInactiveInterval(int interval) {
 		this.maxInactiveInterval = interval;

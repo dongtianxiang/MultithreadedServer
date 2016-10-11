@@ -9,6 +9,7 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 import edu.upenn.cis.cis455.servlets.MyHttpServletRequest;
+import edu.upenn.cis.cis455.servlets.ServletContainer;
 import edu.upenn.cis.cis455.webserver.HttpServerConfig;
 
 /**
@@ -22,7 +23,10 @@ public class MyHttpServletRequestTest extends TestCase{
         MyHttpServletRequest request1;
         Map<String, String> initialLineDict = new HashMap<String, String>();
         Map<String, String> headLinesDict = new HashMap<String, String>();
+        ServletContainer container = new ServletContainer("./conf/web.xml");
         initialLineDict.put("Type", "GET");
+        initialLineDict.put("Path", "/init/foo/demo/abc?key=value");
+        initialLineDict.put("Protocol", "HTTP/1.1");
         HttpServerConfig c = new HttpServerConfig(8080, "/home", "/home/cis555/web.xml");
         request1 = new MyHttpServletRequest(c, new Socket(), initialLineDict, headLinesDict, "", 30);
         assertEquals(request1.getScheme(), "http");
@@ -34,5 +38,6 @@ public class MyHttpServletRequestTest extends TestCase{
         assertEquals(request1.isUserInRole(""), false);
         assertNull(request1.getUserPrincipal());
         assertNull(request1.getPathTranslated());
+        assertEquals(request1.getPathInfo(), "/abc");
     }
 }

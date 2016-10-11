@@ -23,12 +23,22 @@ import org.xml.sax.helpers.DefaultHandler;
 import edu.upenn.cis.cis455.webserver.HttpServerConfig;
 import edu.upenn.cis.cis455.testServlets.*;
 
+/**
+ * Important class as a servlet container, which is responsible for parsing XML, loading servlets
+ * The class is also responsible for dispatching incoming URL into mapped servlets.
+ * @author cis555
+ *
+ */
 public class ServletContainer {
-	private MyHandler h;
+	private static MyHandler h;
 	private ServerServletContext context;
-	private HashMap<String,HttpServlet> servletMap;
+	private static HashMap<String,HttpServlet> servletMap;
 	public static HashMap<String, MyHttpSession> sessionCache = new HashMap<>();
 	
+	/**
+	 * The constructor 
+	 * @param webdotxml The file path of xml file
+	 */
 	public ServletContainer(String webdotxml){
 		try {
 			h = new MyHandler();
@@ -46,6 +56,14 @@ public class ServletContainer {
 		}
 	}
 	
+	/**
+	 * Private class used to parse the XML file
+	 * @param webdotxml
+	 * @return
+	 * @throws ParserConfigurationException
+	 * @throws SAXException
+	 * @throws IOException
+	 */
 	private MyHandler parseWebdotxml(String webdotxml) throws ParserConfigurationException, SAXException, IOException {
 		File file = new File(webdotxml);
 		if (file.exists() == false) {
@@ -58,6 +76,11 @@ public class ServletContainer {
 		return h;
 	}
 	
+	/**
+	 * Use the parameters from XML files to create servlet context
+	 * @param h
+	 * @return
+	 */
 	private ServerServletContext createContext(MyHandler h) {
 		ServerServletContext context = new ServerServletContext();
 		for (String param : h.m_contextParams.keySet()) {
@@ -66,6 +89,16 @@ public class ServletContainer {
 		return context;
 	}
 	
+	/**
+	 * Load all servlets on startup into memory.
+	 * @param h
+	 * @param context
+	 * @return
+	 * @throws ClassNotFoundException
+	 * @throws InstantiationException
+	 * @throws IllegalAccessException
+	 * @throws ServletException
+	 */
 	private HashMap<String,HttpServlet> createServlets(MyHandler h, ServerServletContext context) throws ClassNotFoundException, InstantiationException, IllegalAccessException, ServletException {
 		HashMap<String,HttpServlet> servlets = new HashMap<String,HttpServlet>();
 		for (String servletName : h.m_servlets.keySet()) {
@@ -85,10 +118,15 @@ public class ServletContainer {
 		return servlets;
 	}
 	
+	/**
+	 * Check whether the incoming URL can match one of the servlets
+	 * @param URL
+	 * @return
+	 */
 	public String lookUp(String URL) {
 		String noQueryURL = "";
 		if(URL.contains("?")) {
-			String[] split = URL.split("\\?");
+			String[] split = URL.split("\\?+");
 			URL = split[0];
 		}
 		noQueryURL = URL;
@@ -100,13 +138,47 @@ public class ServletContainer {
 		return h.m_urlPattern.get(res);
 	}
 	
+	/**
+	 * To get the reminder of URL after the portion which has been mapped into servlets
+	 * @param URL
+	 * @return
+	 */
+	public static String getPathInfo(String URL){
+		String noQueryURL = "";
+		if(URL.contains("?")) {
+			String[] split = URL.split("\\?+");
+			URL = split[0];
+		}
+		noQueryURL = URL;
+		String res = "";
+		for(String pattern : h.m_urlPattern.keySet()) {
+			int len = matchString(pattern, noQueryURL);
+			if(len != -1 && len > res.length()) res = pattern;
+		}
+		if( res.charAt(res.length() - 1) == '*' ) res = res.substring(0, res.length() - 1);
+		String pathInf = URL.substring(res.length());
+		if(pathInf.length() >= 1 && pathInf.charAt(0) != '/') pathInf = "/" + pathInf;
+		return pathInf;
+	}
+	
+	/**
+	 * To get the queryString from URL
+	 * @param URL
+	 * @return
+	 */
 	public String getQueryString(String URL) {
-		String[] split = URL.split("\\?");
+		String[] split = URL.split("\\?+");
 		if(split.length <= 1) return "";
 		else return split[1];
 	}
 	
-	public int matchString(String pattern, String URL) {
+	/**
+	 * To check the longest pattern the URL can match, return -1 if nothing has been matched
+	 * @param pattern
+	 * @param URL
+	 * @return
+	 */
+	public static int matchString(String pattern, String URL) {
 		if( !pattern.contains("*") ) {
 			if( pattern.equals(URL)) return pattern.length();
 			else return -1;
@@ -154,6 +226,9 @@ public class ServletContainer {
 		}
 	}
 	
+	/**
+	 * To remove the invalid sessions periodically
+	 */
 	public static void removeInvalidSessions(){
 		if(sessionCache.size() > 100000000) {
 			List<String> invalidID = new ArrayList<>();
@@ -168,6 +243,9 @@ public class ServletContainer {
 		}
 	}
 	
+	/**
+	 * Unload all servlets upon shutdown
+	 */
 	public void shutdown(){
 		for(String str : servletMap.keySet()) {
 			HttpServlet s = servletMap.get(str);

@@ -14,7 +14,11 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-
+/**
+ * This is the class to parse the web.xml file
+ * @author cis555
+ *
+ */
 public class MyHandler extends DefaultHandler{
 	private int m_state = 0;
 	private String m_servletName;
@@ -27,6 +31,9 @@ public class MyHandler extends DefaultHandler{
 	
 	public MyHandler() {}
 	
+	/**
+	 * Specify the starting elements of xml mapping
+	 */
 	public void startElement(String uri, String localName, String qName, Attributes attributes) {
         if (qName.compareTo("servlet") == 0) {
             m_state = 1;
@@ -48,6 +55,9 @@ public class MyHandler extends DefaultHandler{
             m_state = (m_state == 10) ? 11 : 21;
         }
 	}
+	/**
+	 * Parse the exact words in xml
+	 */
 	public void characters(char[] ch, int start, int length) {
 		String value = new String(ch, start, length);
         if (m_state == 300) {
