@@ -60,13 +60,6 @@ public class ThreadWorker extends Thread{
 	 * @param path Home directory
 	 */
 	public static void setHome(String path){
-<<<<<<< HEAD
-//		if(path.length() > 0){
-//			homeFolderDirectory = path.charAt(0) == '.' ? path : "." + path;
-//		} else {
-//			homeFolderDirectory = ".";
-//		}
-=======
 		/* Relative path handling  */
 		
 		/*
@@ -78,7 +71,6 @@ public class ThreadWorker extends Thread{
 		*/
 		
 		/* Should be Absolute path for home directory */
->>>>>>> 69e3bbf0177d38d56862c9e2b388bf16a1caf80b
 		homeFolderDirectory = path;
 	}
 
